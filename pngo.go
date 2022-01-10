@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/golang/glog"
+	"os"
+	"path/filepath"
 	"pngo/id"
 	"strconv"
 	"strings"
@@ -16,7 +18,28 @@ var (
 )
 
 //获取文件路径
-func 
+func retrieveData(root string) (value chan string, err chan error) {
+	err = make(chan error, 1)
+	value = make(chan string)
+	//开一个go程遍历根目录文件
+	go func() {
+		defer close(value)
+		//遍历root根目录
+		err <- filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			//判断文件信息是否合法
+			if !info.Mode().IsRegular() {
+				return nil
+			}
+			//将path的制传给value管道
+			value <- path
+			return nil
+		})
+	}()
+	return
+}
 
 //接收文件并将其发送到一个channel处理
 
